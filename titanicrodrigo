@@ -1,0 +1,195 @@
+#Este projeto foi desenvolvido para o curso de Fundamentos do Data Science I
+# O autor é Rodrigo Bariani, aluno de ciências econômicas
+# Levou cerca de 1 mes para entender todas as bibliotecas e arquiteturas do CÓDIGO
+# O pdf explicativo acompanhará o projeto.
+
+# Chamando biblioteca do Matplotlib
+#% matplotlib
+#inline
+
+"""UTILIZEI UM IDE SIMPLES ONLINE PARA COMPOR A PARTE FINAL DO CÓDIGO
+TALVEZ POR ISSO ALGUNS ERROS, MAS NADA DEMAIS"""
+
+#importação das bibliotecas que iremos trabalhar
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import unicodecsv
+
+#plotando o tamanho das figuras a serem exibidas
+plt.rcParams["figure.figsize"] = 8,6
+
+##Leitura do arquivo que será analisado. Avaliadores precisam ter o mesmo nome
+titanic_df = pd.read_csv('titanic_data.csv')
+
+##aqui apresento um trecho dos dados para verificar a sua ordem
+titanic_df.head(10)
+
+#código da modificação
+#Definicao do Numero de homens e feministas com data correta errada
+
+titanic_df['Embarked'] = titanic_df['Embarked'].replace (['S','C','Q'],['Cherbourg', 'Queenstown', 'Southampton'])
+titanic_df['Sex'] = titanic_df['Sex'].replace (['female','male'], ['m','h'])
+
+
+##Verificar o tamanho do arquivo em tamanho de linhas e colunas
+##Eliminar colunas que não tenham importância para a análise
+
+titanic_df.shape
+
+#Eliminando as colunas que não temos interesse nesta análise.
+
+titanic_df.drop(['PassengerId','Name','Ticket','Cabin'], axis=1, inplace=True)
+
+#verificar novamente como ficaram os dados
+titanic_df.head(10)
+
+titanic_df.info()
+
+#Para ficar mais claro, verificar a soma dos dados vazios
+#irei retirar os dados nulos para não alterar os valores totais.
+
+titanic_df.isnull().sum()
+
+#Dados referentes a idade não serão contabilizados
+#Dados faltantes do embarque nã oserão contabilizados
+
+#titanic_df['Age'].fillna(0, inplace = True)
+titanic_df.dropna(how='any', subset =['Age'], inplace=True)
+titanic_df.dropna(how='any', subset= ['Embarked'], inplace = True)
+
+titanic_df.isnull().sum()
+
+#A maioria dos passageiros e tripulantes,
+#  dos quais temos as infomações, tinham entre 18 e 40 anos
+# mas isso nao influi o resultado final
+
+titanic_df['Age'].plot.hist(bins=15)
+
+plt.xlabel('Idade')
+plt.ylabel('Numero da frequencia')
+plt.title('Idade dos passageiros')
+
+#plotando
+plt.show()
+
+sobrevivente = titanic_df[titanic_df['Survived'] == 1].Survived.value_counts()
+morto = titanic_df[titanic_df['Survived'] == 0].Survived.value_counts()
+
+plt.bar([0,1],[morto,sobrevivente],align='center')
+plt.xticks([0,1],["morreu", "sobreviveu"])
+plt.title("Total de sobreviventes e mortos no acidente")
+plt.xlabel('Resumo do acidente')
+plt.ylabel('Quantidade de pessoas em unidades')
+
+#plotando
+plt.show()
+
+#Ao analisarmos o gráfico referente ao gênero dos passageiros,
+#podemos verificar que um dos gêneros sobreviveu percentualmente muito mais do que o outro.
+
+sobrevivente_genero = titanic_df[titanic_df["Survived"] == 1].Sex.value_counts()
+morto_genero = titanic_df[titanic_df["Survived"] == 0].Sex.value_counts()
+
+#aqui precisamos de um dataframe para morte e genero
+df_morte_genero = pd.DataFrame([sobrevivente_genero,morto_genero])
+df_morte_genero.index = ['Mortos', 'Sobreviventes']
+df_morte_genero.plot(kind='bar')
+
+plt.title("Total de sobreviventes e mortos por genero")
+plt.xlabel('Sobreviventes por sexo')
+plt.ylabel('Quantidade de passageiros em unidades')
+plt.xticks(rotation=0)
+plt.tight_layout()
+
+plt.show()
+
+#Nesse caso temos um caso claríssimo de que a terceira classe foi a que mais morreu, não só pela média
+#mas por sua enorme diferença em números absolutos.
+
+sobreviventes1class = titanic_df[titanic_df['Pclass'] == 1].Survived.value_counts()
+sobreviventes2class = titanic_df[titanic_df['Pclass'] == 2].Survived.value_counts()
+sobreviventes3class = titanic_df[titanic_df['Pclass'] == 3].Survived.value_counts()
+
+df_classe = pd.DataFrame([sobreviventes1class,sobreviventes2class,sobreviventes3class])
+
+df_classe.index = ["Primeira Classe","Segunda Classe","Terceira Classe"]
+df_classe.columns = ["Morreu","Sobreviveu"]
+df_classe[['Sobreviveu',"Morreu"]].plot(kind="bar")
+plt.title("Total de sobreviventes e mortos na tragedia, por classe")
+plt.xlabel('Classe')
+plt.ylabel('Total passageiros sobreviventes/mortos')
+plt.xticks(rotation=0)
+
+#ajuste do layout para envio
+plt.tight_layout()
+plt.show()
+
+
+sns.factorplot('Pclass', data=titanic_df, kind="count")
+
+plt.title("Separacao de passageiros por classe")
+plt.xlabel('Classe')
+plt.ylabel('Total separado por classe')
+plt.show()
+
+livebylocC = titanic_df[titanic_df['Embarked'] == 'Cherbourg'].Survived.value_counts()
+livebylocQ = titanic_df[titanic_df['Embarked'] == 'Queenstown'].Survived.value_counts()
+livebylocS = titanic_df[titanic_df['Embarked'] == 'Southampton'].Survived.value_counts()
+
+df_embarque = pd.DataFrame([livebylocC,livebylocQ,livebylocS])
+
+df_embarque.index = ['Cherbourg', 'Queenstown', 'Southampton']
+df_embarque.columns = ["Sobreviveu","Morreu"]
+df_embarque[['Sobreviveu',"Morreu"]].plot(kind="bar",stacked=True)
+plt.title("Analise de local de embarque")
+plt.xlabel('Cidade de embarque')
+plt.ylabel('Total de pessoas em unidades')
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+#titanic_df.grouby('Survived')['Pclass'].plot(kind="kde")
+#plt.show()
+
+titanic_df.groupby('Survived')['Age'].plot(kind="kde")
+
+plt.title=('Estimativa de Densidade das Idades')
+plt.xlabel=('Idade')
+plt.ylabel=('Densidade')
+plt.xlim(0,90)
+
+#é aqui que o bixo pega: esta é a legenda do plot superior
+plt.legend(['Falecido','Sobrevivente'])
+
+#plotando
+plt.show()
+
+
+# Poderíamos fazer uma análise sobre a correção entre o número de sobreviventes e algumas outras variáveis
+
+# Aqui podemos ter a relação da entre a sobrevivência e a classe do passageiro
+# Quanto mais próximo de 1 ou de -1 maior a relação entre as duas variáveis
+# Segundo este análise, poderíamos concluir que a classe tenha alguma influência na sobrevivência
+# Mas não é o fator determinante
+
+def correlation(x, y):
+    std_x = (x - y.mean()) / x.std(ddof=0)  ##(ddof=1) caso fosse a população completa
+    std_y = (y - y.mean()) / y.std(ddof=0)
+
+    return (std_x * std_y).mean()
+
+#printando correlacao do titanic com a classe
+print(correlation(titanic_df['Survived'], titanic_df['Pclass']))
+
+#Verificando a correlação cruzada de todas variáveis
+
+titanic_df.corr(method='pearson')
+
+titanic_df.groupby(['Embarked', 'Pclass'])['Survived'].mean()
+
+#fim das perguntas
+#fim do codigo
+#rodrigobariani
